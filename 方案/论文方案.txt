@@ -1,0 +1,1103 @@
+# 劳动市场 ABM 论文完整研究方案（画布工作稿 v2）
+
+## 一、项目定位（当前建议定稿方向）
+
+### 1.1 核心方向
+
+**第一版正式聚焦：劳动市场 / 搜索匹配 / 就业动态。**
+
+本文不再以金融市场为主应用，也不再把“人格画像”作为核心标签，而是把论文收束为：
+
+> 使用公开调查约束劳动行为异质性参数，构建条件型劳动市场 ABM，并检验其是否比传统模型和同质 ABM 更能解释美国劳动市场动态。
+
+### 1.2 核心方法论定位
+
+本文的核心方法不是“直接从问卷识别人格”，而是：
+
+1. 用公开调查数据约束劳动行为异质性的**分布形状、组别比例和合理范围**
+2. 在训练样本期内对模型参数进行**校准（calibration）**
+3. 在留出的测试样本期中比较：
+
+   * 传统模型
+   * 同质 ABM
+   * 异质性 ABM
+4. 检验异质性是否在 **out-of-sample** 维度上提供额外解释力
+
+### 1.3 这篇论文不是什么
+
+本文不是：
+
+* 直接识别完整人格结构的论文
+* 单纯拟合总量曲线的论文
+* 试图全内生生成整个宏观经济体的论文
+
+### 1.4 这篇论文是什么
+
+本文是：
+
+* 一篇 **survey-constrained calibration** 论文
+* 一篇 **conditional labor-market ABM** 论文
+* 一篇比较三类模型经验表现的论文
+* 一篇强调验证、可复制性和可移植性的论文
+
+---
+
+## 二、研究问题与核心假设
+
+### 2.1 主研究问题
+
+**在相同外部宏观环境下，引入受公开调查分布约束的劳动行为异质性后，劳动市场 ABM 是否能比传统劳动市场模型和同质 worker 的标准 ABM 更好地解释美国劳动市场动态，并在测试样本期中保持这种优势？**
+
+### 2.2 子问题
+
+1. 在相同外部环境路径下，传统劳动市场模型能够解释劳动市场动态到什么程度？
+2. 把传统模型转为同质 ABM 后，是否已经能带来改进？
+3. 在同质 ABM 基础上加入劳动行为异质性后，是否能进一步改进训练集和测试集表现？
+4. 哪类异质性最重要：
+
+   * 保留工资（reservation wage）
+   * 搜索强度（search intensity）
+   * 劳动参与倾向（participation propensity）
+   * 接受工作机会的阈值 / offer belief
+5. 行为异质性的作用主要体现在：
+
+   * 非农就业变化
+   * 失业率 / 劳动参与率
+   * 招聘与离职流量
+   * 工资动态
+   * 状态转移速度
+     里的哪一部分？
+
+### 2.3 核心假设
+
+**H1**：传统劳动市场基准模型可以解释部分总量趋势，但很难同时解释状态转移、流量和异质性行为。
+
+**H2**：同质 worker 的标准 ABM 相较于传统模型，会对劳动市场动态有一定改进，但改进有限。
+
+**H3**：引入受问卷约束的劳动行为异质性后，ABM 在训练集上的矩匹配表现将优于前两者。
+
+**H4**：若异质性 ABM 的改进并非来自参数数量增加，那么这种优势应在测试样本期中保留。
+
+**H5**：保留工资、搜索强度与劳动参与倾向将是最重要的异质性来源，而 deeper traits 只应作为背景先验，而非主参数来源。
+
+---
+
+## 三、论文的核心贡献
+
+### 3.1 方法贡献
+
+提出一个适用于劳动市场主题的完整流程：
+
+**理论机制存在 -> 问卷约束分布与范围 -> 训练集校准参数数值 -> 测试集外部验证。**
+
+### 3.2 文献贡献
+
+将以下三类通常分离的内容整合到同一个框架中：
+
+1. 公开劳动市场问卷数据
+2. 劳动市场 ABM
+3. 训练—验证—测试式的定量验证
+
+### 3.3 实证贡献
+
+不是简单比较“模型 vs 现实”，而是同时比较：
+
+* 传统劳动市场模型
+* 同质 worker ABM
+* 劳动行为异质性 ABM
+
+这样可以识别：
+
+> 模型改进究竟来自 ABM 结构，还是来自行为异质性。
+
+### 3.4 可移植性贡献
+
+该框架未来可移植到：
+
+* 通胀预期 / 工资—价格动态
+* 住房市场
+* 消费 / 储蓄行为
+* 宏观冲击传播
+
+第一版先在劳动市场落地。
+
+---
+
+## 四、经验对象与目标变量
+
+## 4.1 经验对象
+
+**美国劳动市场的月度动态。**
+
+### 4.2 第一版主结果变量（aggregate targets）
+
+第一版不建议只盯单一“非农”指标，而是使用四类结果共同作为目标：
+
+#### A. CES（企业端总量）
+
+* 非农就业（nonfarm payroll employment）
+* 平均周工时（average weekly hours）
+* 平均时薪（average hourly earnings）
+
+#### B. CPS（家庭端状态）
+
+* 失业率（unemployment rate）
+* 劳动参与率（labor force participation rate）
+* 就业人口比（employment-population ratio）
+
+#### C. JOLTS（劳动市场流量）
+
+* 职位空缺（job openings）
+* 招聘（hires）
+* 离职（separations）
+* 自愿离职（quits）
+* 裁员/解雇（layoffs and discharges）
+
+#### D. SIPP（可选增强）
+
+* 就业/失业/NILF 的月度状态转移
+* 收入变化与状态变化的联动
+
+### 4.3 为什么不只用非农
+
+因为单一非农序列过于总量化，难以识别不同微观机制。多个结果共同使用可以提高模型约束力，减少“不同机制拟合同一总量”的问题。
+
+---
+
+## 五、数据系统与问卷来源
+
+## 5.1 宏观/总量目标数据
+
+### A. CES
+
+作用：企业端的就业、工时和工资结果变量。
+
+### B. CPS
+
+作用：家庭端劳动状态分布、失业率、劳动参与率及相关状态信息。
+
+### C. JOLTS
+
+作用：岗位空缺、招聘、离职等劳动市场流量。
+
+### D. SIPP（可选增强）
+
+作用：状态转移、收入变化、长期纵向动态。
+
+---
+
+## 5.2 问卷/微观参数来源（核心）
+
+### A. SCE Labor Market Survey
+
+最关键的参数来源，用于抽取：
+
+* reservation wage
+* job search behavior
+* offer probability
+* offer wage
+* job transition expectations
+* earnings expectations
+* separation / finding beliefs
+
+### B. SCE Job Search Supplement
+
+用于抽取更细的搜索行为：
+
+* 申请数
+* 联系数
+* 面试数
+* offer 数
+* 搜索行为和结果细节
+
+### C. CPS / SIPP
+
+用于提供：
+
+* 劳动参与倾向相关分布
+* 状态转移率
+* 条件分布（按年龄、教育、就业状态分组）
+
+---
+
+## 5.3 深层特质的外部先验来源（可选，不作为主参数源）
+
+如果后续需要 deeper traits 作为机制背景，可使用：
+
+* NLSY97
+* NLSY79
+* HRS
+
+可用于提供：
+
+* risk attitude
+* grit / industriousness
+* mastery / locus of control
+* 其他 noncognitive measures
+
+但这些数据只作为：
+
+* 理论动机
+* 参数方向性先验
+* 稳健性补充
+
+**不作为第一版主参数来源。**
+
+---
+
+## 六、模型总体结构：条件型劳动市场 ABM
+
+## 6.1 模型口径
+
+第一版建议采用 **conditional labor-market ABM**，而不是全内生宏观经济体。
+
+即：
+
+* **worker-side 行为内生**
+* **外部宏观环境外生或半外生**
+
+公式上可写为：
+
+`State_{t+1} = F(State_t, WorkerBehavior_t, ExogenousEnvironment_t; theta)`
+
+其中：
+
+* `State_t`：就业、失业、非参与、工资分布、匹配结果等
+* `WorkerBehavior_t`：搜索、接受、退出、转移等行为
+* `ExogenousEnvironment_t`：宏观需求、政策环境、冲击路径、岗位需求环境等
+* `theta`：待校准参数
+
+### 6.2 为什么这样设计
+
+1. 第一版更现实，可执行性更高
+2. 避免把问题做成“完整宏观经济体重建”
+3. 更容易把贡献集中在 worker-side heterogeneity 上
+4. 更便于与传统模型和同质 ABM 比较
+
+---
+
+## 七、三组模型的并行比较结构
+
+## 7.1 Model A：Traditional Labor Benchmark（传统劳动市场基准模型）
+
+### 推荐定位
+
+一个简化的 canonical labor-market benchmark，例如：
+
+* 代表性 worker 的搜索/接受框架
+* 或简化的搜索匹配框架
+* 同质劳动者
+* 单一 reservation wage / 单一 search rule
+
+### 作用
+
+回答：
+
+> 如果只保留传统同质个体假设，模型能解释到什么程度？
+
+---
+
+## 7.2 Model B：Standard ABM（同质 worker 的标准 ABM）
+
+### 核心特征
+
+* 有多个 worker agent
+* 允许状态转移和互动反馈
+* 但所有 worker 参数相同
+* 与 Model C 共享同样的外生环境路径
+
+### 作用
+
+回答：
+
+> 改进究竟来自 ABM 结构本身，还是来自异质性？
+
+---
+
+## 7.3 Model C：Heterogeneous ABM（劳动行为异质性 ABM）
+
+### 核心特征
+
+* 多个 worker agent
+* 存在 worker-side parameter heterogeneity
+* 在相同外生环境下运行
+* 重点研究行为异质性是否提高解释力
+
+### 第一版不建议高频使用的标签
+
+* personality profiling
+* full personality traits model
+
+### 第一版建议使用的标签
+
+* labor-market behavioral heterogeneity
+* heterogeneous workers
+* survey-constrained labor heterogeneity
+
+---
+
+## 八、第一版核心参数设计（不超过四个）
+
+### 参数 1：`reservation_wage`
+
+**经济含义**：最低可接受工资阈值。
+
+**问卷来源**：SCE Labor Market Survey。
+
+**模型作用**：影响 worker 是否接受工作机会。
+
+**为什么重要**：这是最直接、最可解释、最接近劳动市场决策阈值的参数。
+
+---
+
+### 参数 2：`search_intensity`
+
+**经济含义**：找工作的努力程度/频率。
+
+**问卷来源**：SCE Job Search Supplement。
+
+**模型作用**：影响投递数、接触雇主数、面试概率、offer arrival 频率。
+
+**为什么重要**：搜索强度是劳动市场动态中最自然的微观异质性之一。
+
+---
+
+### 参数 3：`participation_propensity`
+
+**经济含义**：进入、留在或退出劳动力市场的倾向。
+
+**来源**：CPS + SIPP（状态分布和转移率）。
+
+**模型作用**：影响就业、失业和非劳动力状态之间的转换。
+
+**为什么重要**：它直接连接劳动参与率和就业人口比。
+
+---
+
+### 参数 4：`offer_acceptance_threshold` 或 `offer_arrival_belief`
+
+**经济含义**：接受工作机会的门槛，或对未来收到工作机会的主观信念。
+
+**来源**：SCE Labor Market Survey。
+
+**模型作用**：影响匹配成功后的接受决策，以及搜索持续性。
+
+**为什么重要**：它把主观预期和实际转移联系起来。
+
+---
+
+## 八点五、第一版不建议加入的参数
+
+* 完整人格维度（Big Five）
+* 情绪状态变量
+* 社会网络复杂结构
+* 多层家庭内决策
+* 复杂企业异质性全内生模块
+
+这些可以作为第二阶段扩展，不适合第一版。
+
+---
+
+## 九、worker types 设计：比连续人格更稳的第一版方案
+
+第一版不建议先建很多连续人格维度，更稳的做法是建立有限个 worker types。
+
+### 推荐类型示意
+
+1. **高 reservation wage / 高搜索型**
+2. **低 reservation wage / 高接受型**
+3. **低搜索 / 高退出风险型**
+4. **已就业但高流动型**
+
+### 类型来源
+
+这些类型不是主观命名，而是由问卷变量聚类或 latent class 方法得到，例如基于：
+
+* reservation wage
+* search intensity
+* offer beliefs
+* transition intentions
+* 当前就业状态
+
+### 为什么这样做更好
+
+1. 更贴劳动经济学
+2. 更容易解释和展示
+3. 更不容易出现“人格识别”争议
+4. 与 ABM 参数中心设定更兼容
+
+---
+
+## 十、问卷到底解决了什么，没解决什么
+
+## 10.1 问卷解决的部分
+
+### A. 参数范围（range）
+
+问卷让参数不再是拍脑袋设定，可以得到：
+
+* 合理上下界
+* 组别比例
+* 分布形状
+
+### B. 异质性分布（distribution）
+
+可以估计：
+
+* 经验分布
+* 条件分布
+* 组间比例
+* latent worker types
+
+---
+
+## 10.2 问卷没有直接解决的部分
+
+### A. 精确结构参数值
+
+问卷答案不能直接等于模型参数值。
+
+### B. 动态传导机制
+
+问卷告诉你个体怎么想、怎么回答，但不能自动告诉你这些差异如何汇总成宏观劳动市场动态。
+
+### C. 全部内生关系
+
+问卷不能替代模型的结构设计。
+
+### 因此最终逻辑必须写成：
+
+> 问卷负责约束分布与范围，训练集负责校准具体数值，测试集负责检验泛化能力。
+
+---
+
+## 十一、如何避免循环使用、未来函数和泄漏问题
+
+这是劳动市场版本必须明确写清的部分。
+
+### 规则 1：不从同一期 aggregate 结果中反推 traits 再解释同一期结果
+
+不允许：
+
+* 从同一期宏观劳动市场结果中抽取 worker traits
+* 再声称这些 traits 解释了同一期结果
+
+### 规则 2：测试期问卷不能用于重新调参
+
+训练/验证/测试必须严格切分。测试期只用于评估。
+
+### 规则 3：当期状态变量不能伪装成“深层人格”
+
+例如：
+
+* 当期是否找工作
+* 当期 search intensity
+* 当期 offer belief
+
+这些只能视为：
+
+* behavioral state
+* labor behavior variable
+
+而不是稳定人格。
+
+### 规则 4：deeper traits 只能来自独立外部数据源
+
+如需使用 risk attitude、grit、mastery 等 deeper traits，只能来自：
+
+* NLSY97
+* NLSY79
+* HRS
+
+且只能作为：
+
+* 背景机制
+* 方向性先验
+* 稳健性补充
+
+### 规则 5：三组模型共享同一外生环境路径
+
+这样才能把表现差异归因于：
+
+* 模型结构
+* 是否存在异质性
+
+而不是外部环境输入不同。
+
+---
+
+## 十二、模型的微观机制（第一版最小可行形式）
+
+## 12.1 状态空间
+
+每个 worker 在每期处于以下状态之一：
+
+* Employed（就业）
+* Unemployed（失业）
+* NILF（不在劳动力市场）
+
+## 12.2 worker 行为规则
+
+worker 在 t 期根据以下内容做决策：
+
+* 当前状态
+* 自身参数（reservation wage, search intensity, participation propensity, offer belief）
+* 外部环境
+* 当前可用的工资/岗位信息
+
+### 行为包括：
+
+1. 是否进入/退出劳动力市场
+2. 是否搜索工作
+3. 搜索强度多大
+4. 若收到 offer，是否接受
+5. 若已就业，是否转岗或留下
+
+## 12.3 匹配与 offer 机制
+
+第一版不必构建复杂企业异质性网络。可采用半外生的简化机制：
+
+* 外生环境给定岗位需求强度/offer arrival environment
+* worker 根据搜索强度与状态获得 offer 的概率不同
+* 匹配结果受 aggregate vacancy environment 影响
+
+## 12.4 工资形成
+
+工资可采用简化形式：
+
+* offer wage 来自外部 wage distribution 或环境条件
+* reservation wage 决定接受阈值
+* 也可允许简单的 wage growth / bargaining 规则
+
+### 第一版原则
+
+优先保证：
+
+* 结构清楚
+* 参数可解释
+* 能校准
+* 能验证
+
+而不是微观极度复杂。
+
+---
+
+## 十三、内生变量、外生变量与半外生模块
+
+## 13.1 内生变量（必须由模型内部生成）
+
+* 就业/失业/NILF 状态转移
+* 搜索行为
+* reservation wage 与接受决策
+* 匹配结果
+* 转岗/退出行为
+* worker type 的异质性影响
+
+## 13.2 外生变量（可直接输入）
+
+* 宏观需求环境
+* 政策环境
+* 外部冲击路径
+* 某些慢变量（如人口结构趋势）
+
+## 13.3 半外生模块（第一版最实用）
+
+* vacancy environment
+* offer arrival environment
+* aggregate wage conditions
+
+### 为什么要这么分
+
+因为第一版的核心贡献不在于完整重建整个宏观经济，而在于识别 worker-side heterogeneity 是否有额外解释力。
+
+---
+
+## 十四、数据到参数的映射方案（Data-to-Parameter Mapping）
+
+## 14.1 `reservation_wage`
+
+### 直接来源
+
+SCE Labor Market Survey。
+
+### 映射方式
+
+1. 估计经验分布或条件分布
+2. 按年龄/教育/状态等分层
+3. 设定若干 worker groups 的中心值和范围
+4. 具体数值由训练集校准
+
+---
+
+## 14.2 `search_intensity`
+
+### 直接来源
+
+SCE Job Search Supplement。
+
+### 映射方式
+
+1. 用申请数、联系数、面试数、offer 数估搜索强度分布
+2. 可离散化为低/中/高三档
+3. 或直接聚类形成 worker types
+
+---
+
+## 14.3 `participation_propensity`
+
+### 直接来源
+
+CPS / SIPP。
+
+### 映射方式
+
+1. 用 labor force participation 与 NILF 转移估计组别差异
+2. 允许不同 worker types 的进入/退出阈值不同
+3. 参数范围由状态分布与月度转移率约束
+
+---
+
+## 14.4 `offer_acceptance_threshold` / `offer_arrival_belief`
+
+### 直接来源
+
+SCE Labor Market Survey。
+
+### 映射方式
+
+1. 利用主观未来几个月收到 offer 的概率
+2. 利用 offer wage / 接受意愿 / 转岗预期
+3. 形成组别分布和参数范围
+4. 在训练样本中校准最终数值
+
+---
+
+## 十五、训练、校准与估计框架
+
+## 15.1 数据切分
+
+建议第一版采用：
+
+* Train：60%
+* Validation：20%
+* Test：20%
+
+也可在后续稳健性中考虑：
+
+* rolling window
+* expanding window
+
+### 原则
+
+测试集绝不能参与调参。
+
+---
+
+## 15.2 损失函数（Loss Function）
+
+建议采用多目标矩匹配：
+
+`L(theta) = sum_k w_k (m_k^sim(theta) - m_k^data)^2 + lambda * penalty(theta)`
+
+其中：
+
+* `theta`：参数集合
+* `m_k`：目标统计量
+* `w_k`：权重
+* `penalty(theta)`：复杂度惩罚项
+
+### 第一版建议纳入的矩
+
+#### 总量与状态：
+
+* 非农就业变化
+* 失业率均值与波动
+* 劳动参与率均值与波动
+* 就业人口比
+
+#### 流量：
+
+* hires rate
+* separations rate
+* quits rate
+* layoffs/discharges rate
+
+#### 工资与工时：
+
+* 平均时薪增速
+* 平均工时变动
+
+#### 动态：
+
+* 一阶与多阶自相关
+* 转折点响应
+* 冲击后的恢复速度
+
+### 目标函数原则
+
+* 不要只拟合一条总量曲线
+* 要同时覆盖水平、波动、流量和动态结构
+
+---
+
+## 15.3 第一版推荐训练方法
+
+### 方案 A：Random Search
+
+最适合第一版：
+
+1. 给定参数范围
+2. 抽取大量参数组合
+3. 每组参数运行多次仿真
+4. 计算平均损失
+5. 选出前若干最优参数
+
+### 方案 B：Latin Hypercube Sampling
+
+如果要更系统，可采用分层抽样。
+
+### 第二阶段升级可选
+
+* 贝叶斯优化
+* 遗传算法
+* Simulated Method of Moments (SMM)
+* Indirect Inference
+
+### 第一版建议
+
+先用 Random Search / LHS，把逻辑跑通。
+
+---
+
+## 15.4 多随机种子与路径稳定性
+
+每组参数建议：
+
+* 至少运行 20~50 个随机种子
+* 用平均损失作为主评价
+* 用方差或置信区间衡量稳定性
+
+这样可避免偶然路径导致误判。
+
+---
+
+## 15.5 模型选择规则
+
+1. 训练集筛出前若干优质参数组
+2. 验证集比较稳定性和泛化性
+3. 选择综合表现最稳的参数组
+4. 固定该参数组，在测试集报告最终结果
+
+---
+
+## 十六、模型评价体系
+
+## 16.1 主比较对象
+
+1. Traditional labor benchmark
+2. Standard ABM
+3. Heterogeneous labor-market ABM
+
+### 可选附加基准
+
+4. Reduced-form statistical benchmark
+
+   * 简单 AR / VAR / local projection style baseline
+   * 或简单 labor-flow forecasting baseline
+
+### 为什么加统计基准
+
+因为 reviewer 可能会问：
+
+> 你虽然比传统结构模型好，但和简单统计模型比呢？
+
+---
+
+## 16.2 三层评价
+
+### 层 1：In-sample fit
+
+训练集上的匹配程度。
+
+### 层 2：Validation performance
+
+验证集上的稳定性。
+
+### 层 3：Out-of-sample performance
+
+测试集上的最终表现，是整篇论文最关键的结果。
+
+---
+
+## 16.3 主要结果表格建议
+
+### Table 1：样本统计与数据来源
+
+### Table 2：问卷变量—参数映射表
+
+### Table 3：三类模型训练集表现
+
+### Table 4：三类模型验证集表现
+
+### Table 5：三类模型测试集表现
+
+### Table 6：参数消融 / worker type 贡献
+
+### Table 7：稳健性检验
+
+---
+
+## 十七、关键稳健性检验
+
+## 17.1 参数消融（ablation）
+
+依次去掉：
+
+* reservation wage heterogeneity
+* search intensity heterogeneity
+* participation propensity heterogeneity
+* offer belief / acceptance heterogeneity
+
+看哪一类最重要。
+
+## 17.2 类型数变化
+
+* 两类 worker vs 三类 worker vs 四类 worker
+* latent classes vs 连续分布
+
+## 17.3 样本切分变化
+
+* 不同 train/validation/test 划分
+* rolling window
+* expanding window
+
+## 17.4 目标函数权重变化
+
+检验结果是否过于依赖某些指标。
+
+## 17.5 不同外生环境处理方式
+
+* 更强外生 vacancy path
+* 更弱外生 vacancy path
+* 替代性 macro environment 输入
+
+---
+
+## 十八、论文结构建议（成稿版）
+
+## 18.1 Introduction
+
+1. 代表性 worker 假设的局限
+2. ABM 在劳动市场中的潜力与验证问题
+3. 本文方法：问卷约束 + 训练校准 + 测试验证
+4. 本文贡献
+
+## 18.2 Literature Review
+
+三块：
+
+1. canonical labor / search-matching models
+2. labor-market ABM / calibration / validation
+3. survey-based labor expectations / behavioral heterogeneity
+
+## 18.3 Data
+
+1. CES / CPS / JOLTS / SIPP
+2. SCE Labor / Job Search
+3. 变量构造与样本切分
+
+## 18.4 Model
+
+1. Traditional labor benchmark
+2. Standard ABM
+3. Heterogeneous conditional labor-market ABM
+
+## 18.5 Calibration and Estimation
+
+1. 参数映射
+2. train/validation/test split
+3. loss function
+4. search algorithm
+
+## 18.6 Results
+
+1. in-sample fit
+2. validation
+3. out-of-sample comparison
+4. worker-type / parameter ablation
+
+## 18.7 Robustness
+
+1. alternative splits
+2. alternative distributions
+3. alternative loss weights
+4. alternative exogenous environment settings
+
+## 18.8 Discussion and Conclusion
+
+1. 异质性增益具体在哪里
+2. 当前框架的局限
+3. 如何向通胀、住房、消费问题迁移
+
+---
+
+## 十九、预期贡献的正确表达方式
+
+## 19.1 不要这样写
+
+* “我们证明人格决定了劳动市场走势”
+* “我们直接识别了人格参数”
+* “我们完整内生地解释了美国劳动市场”
+
+## 19.2 推荐写法
+
+* 本文提出一种受公开调查分布约束的劳动行为异质性建模方法。
+* 本文比较传统模型、同质 ABM 与异质性 ABM 的经验表现。
+* 本文发现，在测试样本期中，异质性 ABM 在若干关键劳动市场指标上表现更优。
+* 本文表明，公开劳动市场问卷可以作为 ABM 异质性分布设定的经验约束来源。
+
+---
+
+## 二十、投稿路线建议
+
+## 20.1 当前最现实的目标区间
+
+如果结果扎实且 out-of-sample 改进明显：
+
+* Journal of Economic Dynamics and Control
+* Journal of Economic Behavior & Organization
+* Review of Economic Dynamics（冲刺）
+
+如果结果更偏方法学、框架型、可复制性强但经济结论温和：
+
+* Computational Economics
+* Journal of Economic Interaction and Coordination
+* JASSS
+
+## 20.2 当前不建议瞄准的层级
+
+* top 5 general-interest journals
+* 顶级 labor/finance 顶刊
+
+除非最后有非常强的广泛经济含义或预测贡献。
+
+---
+
+## 二十一、第一版最小可行执行方案（MVP）
+
+### 21.1 数据
+
+* CES
+* CPS
+* JOLTS
+* SCE Labor Market Survey
+* SCE Job Search Supplement
+* （可选）SIPP
+
+### 21.2 模型
+
+* 1 个传统劳动市场基准模型
+* 1 个同质 worker ABM
+* 1 个异质性 worker ABM
+
+### 21.3 参数
+
+* `reservation_wage`
+* `search_intensity`
+* `participation_propensity`
+* `offer_acceptance_threshold` / `offer_arrival_belief`
+
+### 21.4 训练方法
+
+* Random Search 或 LHS
+* 多随机种子
+* Train / Validation / Test
+
+### 21.5 输出结果
+
+* 三类模型在训练/验证/测试集的比较
+* worker type 消融
+* 稳健性检验
+
+### 21.6 成功标准
+
+如果异质性 ABM 在测试集上相对前两类模型有稳定、可重复、可解释的改进，这篇论文就具备较强发表潜力。
+
+---
+
+## 二十二、当前最大的风险点与应对
+
+### 风险 1：参数过多导致过拟合
+
+**应对**：第一版只保留 4 个核心参数。
+
+### 风险 2：问卷到参数的映射被批评过强
+
+**应对**：明确写成“约束分布和范围”，而不是“直接识别”。
+
+### 风险 3：行为状态被误写成人格特质
+
+**应对**：统一用 labor-market behavioral heterogeneity，不用 personality 作为主术语。
+
+### 风险 4：测试集优势不明显
+
+**应对**：简化模型、减少参数、重设损失函数，不要硬撑。
+
+### 风险 5：外生变量太多导致 claim 过强
+
+**应对**：明确这是 conditional labor-market ABM，而不是完整宏观经济体。
+
+---
+
+## 二十三、最优先的下一步任务
+
+### 阶段 1：固定问题
+
+1. 明确 aggregate targets 的最终集合
+2. 明确 4 个核心参数
+3. 明确外生环境变量边界
+
+### 阶段 2：固定数据
+
+4. 列出 SCE / CPS / CES / JOLTS / SIPP 的变量表
+5. 明确参数—问卷变量映射表
+6. 决定 worker types 的构造方式
+
+### 阶段 3：固定估计策略
+
+7. 决定损失函数中的核心矩
+8. 决定 train/validation/test 划分
+9. 决定随机搜索还是 LHS
+
+### 阶段 4：固定成文结构
+
+10. 写 proposal 摘要
+11. 写方法部分
+12. 写 literature review 与投稿定位
+
+---
+
+## 二十四、可以直接拿去讨论的一段摘要（劳动市场版）
+
+本文拟提出一个“受公开调查分布约束的劳动市场 ABM 参数校准框架”，用于检验劳动行为异质性是否能提升 agent-based model 对美国劳动市场动态的解释力。研究将并行比较三类模型：传统劳动市场基准模型、同质 worker 的标准 ABM，以及引入保留工资、搜索强度、劳动参与倾向和工作机会接受阈值异质性的扩展 ABM。纽约联储 SCE Labor Market Survey 与 Job Search Survey 将用于约束异质性分布与参数范围，而具体参数数值将在训练样本期中通过随机搜索与矩匹配损失函数进行校准，并在独立测试样本期中比较各模型对非农就业、失业率、劳动参与率、职位空缺、招聘与离职等关键劳动市场指标的表现。本文的目标不是直接识别抽象人格结构，而是构建一个可复制、可验证、可移植的劳动行为异质性建模方案，以评估异质性在劳动市场 ABM 中是否提供了超出传统模型与同质 ABM 的额外解释力。
+
+---
+
+## 二十五、当前阶段的最终判断
+
+现在的数据条件已经足以支撑一版完整而严肃的劳动市场研究方案。
+
+最关键的转变是：
+
+1. 从“人格画像”转向“劳动行为异质性”
+2. 从“全内生宏观经济体”转向“条件型劳动市场 ABM”
+3. 从“单指标拟合”转向“多指标联合验证”
+
+在这个版本下：
+
+* 参数范围问题有问卷支撑
+* 异质性分布问题有微观调查支撑
+* 宏观目标问题有官方统计支撑
+* 泄漏和循环使用问题可以通过训练—测试切分与外部先验区分来控制
+
+这意味着该项目已经具备进入正式 research design 阶段的条件。
