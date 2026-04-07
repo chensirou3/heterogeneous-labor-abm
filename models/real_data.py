@@ -84,7 +84,10 @@ def fetch_bls_data(
                 if entry["period"].startswith("M") and entry["period"] != "M13":
                     year = int(entry["year"])
                     month = int(entry["period"][1:])
-                    val = float(entry["value"])
+                    try:
+                        val = float(entry["value"])
+                    except (ValueError, TypeError):
+                        continue
                     results[sid].append((year, month, val))
 
     # Sort by date
